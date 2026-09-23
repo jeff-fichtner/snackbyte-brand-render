@@ -1,0 +1,54 @@
+/* Generated from the snackbyte brand guide v1.1.0. Do not edit. */
+
+:root {
+  --ground: #ECEDEA;
+  --ink: #45423E;
+  --muted: #6B6762;
+  --sky: #38639A;
+  --sage: #8B9B86;
+  --sage-text: #5F6E5A;
+  --bitterbrush: #D2A93A;
+  --rule: #cfd1cb;
+
+  --unit: 4px;
+  --gap: 12px;
+  --seam: 28px;
+  --cell: 40px;
+  --cell-seam: 68px;
+  --stack: 108px;
+
+  --type-0: 1rem;
+  --type-1: 1.438rem;
+  --type-2: 2.063rem;
+  --type-3: 2.938rem;
+  --type-4: 4.188rem;
+  --type-5: 5.938rem;
+
+  --font: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-display-opsz: 96;
+  --font-text-opsz: 14;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #2A2724;
+    --ink: #ECEDEA;
+    --muted: #A8A49D;
+    --sky: #7FA7D3;
+    --sage: #9DAE98;
+    --sage-text: #9DAE98;
+    --bitterbrush: #DDB447;
+    --rule: #4a4642;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #2A2724;
+  --ink: #ECEDEA;
+  --muted: #A8A49D;
+  --sky: #7FA7D3;
+  --sage: #9DAE98;
+  --sage-text: #9DAE98;
+  --bitterbrush: #DDB447;
+  --rule: #4a4642;
+}

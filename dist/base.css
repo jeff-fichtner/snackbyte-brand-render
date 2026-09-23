@@ -1,0 +1,54 @@
+/* Generated from the snackbyte brand guide v1.1.0. Do not edit. */
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-optical-sizing: auto;
+  font-variation-settings: 'opsz' var(--font-text-opsz);
+  font-size: var(--type-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--sky);
+}
+a:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* The wordmark: the name, always lowercase, in the display cut. */
+.wordmark {
+  font-family: var(--font);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 96;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+/* The primary lockup: the row above the name, one seam apart, left edges aligned
+   on ink. The proportions come from the font's metrics. */
+.lockup {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: var(--lockup-size, 6rem);
+}
+.lockup > .mark {
+  display: block;
+  width: 3.232em;
+  height: auto;
+  margin-bottom: 0.085em;
+}
+.lockup > .wordmark {
+  font-size: 1em;
+  margin-left: -0.024em;
+}

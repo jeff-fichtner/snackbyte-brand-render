@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105 10" width="105" height="10" role="img" aria-label="snackbyte">
+  <path d="M2,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#ECEDEA"/>
+  <path d="M15,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#ECEDEA"/>
+  <path d="M28,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#ECEDEA"/>
+  <path d="M41,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#ECEDEA"/>
+  <path d="M58,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#7FA7D3"/>
+  <path d="M71,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#7FA7D3"/>
+  <path d="M84,0 h6 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-6 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" fill="#7FA7D3"/>
+  <path d="M98.063,0 h-1.063 a2,2 0 0 0 -2,2 v6 a2,2 0 0 0 2,2 h6 a2,2 0 0 0 2,-2 v-1.063 A8,8 0 0 1 98.063,0 z" fill="#7FA7D3"/>
+</svg>
