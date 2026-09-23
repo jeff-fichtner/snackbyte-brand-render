@@ -9,5 +9,5 @@ export declare const color: Record<Role, { day: string; night: string; name: Rec
 export declare const geometry: { cell: number; radius: number; gap: number; seam: number; bite: { r: number; cx: number; cy: number } };
 export declare const type: Record<string, unknown>;
 export declare const space: { unit: number; steps: Record<string, number> };
-export declare const copy: { name: string; headline: string; headlineLines: string[]; subhead: string; place: string };
+export declare const copy: { "name": string; "headline": string; "headlineLines": string[]; "subhead": string; "based": string; "place": string };
 export declare const marks: { row: Mark; stack: Mark };

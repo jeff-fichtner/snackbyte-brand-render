@@ -63,6 +63,13 @@ for (const form of ['row', 'stack']) {
 const dts = read('index.d.ts');
 check(dts.includes("'day' | 'night'"), 'index.d.ts lost the theme union');
 
+// Types are generated, not written: every key the guide states must appear in them, or a
+// consumer's typecheck rejects a value that is really there.
+for (const key of Object.keys(GUIDE.copy).filter((k) => k !== '_')) {
+  check(dts.includes(`"${key}"`), `index.d.ts does not declare copy.${key}`);
+  check(read('index.js').includes(`"${key}"`), `index.js does not carry copy.${key}`);
+}
+
 if (fail.length) {
   console.error('FAILED\n' + fail.map((f) => `  - ${f}`).join('\n'));
   process.exit(1);

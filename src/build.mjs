@@ -520,6 +520,18 @@ function indexJs(forms) {
   );
 }
 
+/**
+ * The `copy` block's shape, derived from the guide rather than restated. A hand-written
+ * type here would silently omit any key the guide gained, which is the one failure this
+ * repository is supposed to make impossible.
+ */
+function copyFields() {
+  return Object.entries(GUIDE.copy)
+    .filter(([k]) => k !== '_')
+    .map(([k, v]) => `${JSON.stringify(k)}: ${Array.isArray(v) ? 'string[]' : 'string'}`)
+    .join('; ');
+}
+
 function indexDts() {
   return (
     `// Generated from the snackbyte brand guide v${GUIDE.version}. Do not edit.\n` +
@@ -532,7 +544,7 @@ function indexDts() {
     `export declare const geometry: { cell: number; radius: number; gap: number; seam: number; bite: { r: number; cx: number; cy: number } };\n` +
     `export declare const type: Record<string, unknown>;\n` +
     `export declare const space: { unit: number; steps: Record<string, number> };\n` +
-    `export declare const copy: { name: string; headline: string; headlineLines: string[]; subhead: string; place: string };\n` +
+    `export declare const copy: { ${copyFields()} };\n` +
     `export declare const marks: { row: Mark; stack: Mark };\n`
   );
 }
