@@ -1,4 +1,4 @@
-// Generated from the snackbyte brand guide v1.1.0. Do not edit.
+// Generated from the snackbyte brand guide v1.2.0. Do not edit.
 export type Theme = 'day' | 'night';
 export type Role = 'ground' | 'ink' | 'muted' | 'sky' | 'sage' | 'sage-text' | 'bitterbrush' | 'rule';
 export type Shape = { d: string; role: 'ink' | 'sky' };

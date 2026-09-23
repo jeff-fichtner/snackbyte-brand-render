@@ -52,6 +52,10 @@ npm install && npm run build && npm run check:all
 git commit -am "take guide v1.2.0" && git tag v1.1.0 && git push origin main --tags
 ```
 
+If the guide's version does not change in the output, npm reused a cached copy of the
+git dependency — `rm -rf node_modules/snackbyte-brand` and install the tag explicitly.
+For the same reason, never move a published tag: cut a new one.
+
 Then install the new tag in each consumer. The full loop, from deciding a value to
 recording where it landed, is in the
 [guide's README](https://github.com/jeff-fichtner/snackbyte-brand#changing-a-value).
