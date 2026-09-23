@@ -7,14 +7,21 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./tokens.css": "./dist/tokens.css",
     "./base.css": "./dist/base.css",
     "./marks.json": "./dist/marks.json",
     "./dist/*": "./dist/*"
   },
-  "files": ["dist"],
-  "engines": { "node": ">=24" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "node src/build.mjs",
     "check:all": "node src/verify.mjs"
@@ -22,7 +29,7 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "fontkit": "^2.0.4",
-    "snackbyte-brand": "github:jeff-fichtner/snackbyte-brand#v1.1.0"
+    "snackbyte-brand": "github:jeff-fichtner/snackbyte-brand#v1.2.0"
   },
   "repository": {
     "type": "git",
