@@ -44,5 +44,17 @@ npm run build      # regenerates dist/
 npm run check:all  # asserts dist/ is current and every value traces to the guide
 ```
 
-To take a new version of the guide: bump the `snackbyte-brand` tag in `package.json`,
-install, build, commit `dist/`, tag.
+### Taking a new version of the guide
+
+```bash
+npm pkg set devDependencies.snackbyte-brand="github:jeff-fichtner/snackbyte-brand#v1.2.0"
+npm install && npm run build && npm run check:all
+git commit -am "take guide v1.2.0" && git tag v1.1.0 && git push origin main --tags
+```
+
+Then install the new tag in each consumer. The full loop, from deciding a value to
+recording where it landed, is in the
+[guide's README](https://github.com/jeff-fichtner/snackbyte-brand#changing-a-value).
+
+Nothing here decides anything, so there is never a reason to edit a value in this
+repository: `check:all` compares every one of them against the guide and fails.
