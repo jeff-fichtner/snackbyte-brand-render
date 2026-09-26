@@ -1,5 +1,5 @@
-// Generated from the snackbyte brand guide v1.2.0. Do not edit.
-export const version = "1.2.0";
+// Generated from the snackbyte brand guide v1.3.0. Do not edit.
+export const version = "1.3.0";
 export const color = {
   "_": "Eight roles. Each has a day value and a night value; nothing else changes between themes. Ground and ink swap; the accents lift enough to read. Every text role passes 4.5:1 on its ground in both themes.",
   "ground": {
@@ -87,6 +87,31 @@ export const geometry = {
     "cy": -1
   }
 };
+export const forms = {
+  "_": "How the numbers compose. Coordinates are derived from geometry, not stated here.",
+  "row": {
+    "nibbles": [
+      "ink",
+      "sky"
+    ],
+    "direction": "horizontal",
+    "bitten": "last"
+  },
+  "stack": {
+    "nibbles": [
+      "sky",
+      "ink"
+    ],
+    "direction": "vertical",
+    "bitten": "last-of-first-row"
+  },
+  "tile": {
+    "size": 64,
+    "radius": 14,
+    "holds": "stack",
+    "fill": "ground"
+  }
+};
 export const type = {
   "_": "One family at two optical sizes. The wordmark is always the lowercase name in the display cut.",
   "family": "Bricolage Grotesque",
@@ -139,6 +164,16 @@ export const space = {
     "stack": 108
   }
 };
+export const motion = {
+  "_": "How the mark arrives. The sequence is derived from the name — each letter's code, most significant bit first — so only the timings are stated here.",
+  "arrival": {
+    "letterMs": 140,
+    "holdMs": 160,
+    "biteMs": 320,
+    "offOpacity": 0.16,
+    "biteEasing": "cubic-bezier(.3,1.6,.5,1)"
+  }
+};
 export const copy = {
   "_": "The words the brand ships with. The voice rules that produced them are in GUIDE.md.",
   "name": "snackbyte",
@@ -150,6 +185,11 @@ export const copy = {
   "subhead": "snackbyte builds tools for people who need something that does not exist yet. Each one does one job, knows only what it needs, and stops there.",
   "based": "Based in Bishop, California.",
   "place": "Bishop, California."
+};
+export const theme = {
+  "_": "How an implementation selects between day and night.",
+  "default": "day",
+  "dark": "prefers-color-scheme: dark, unless html[data-theme=\"light\"]; always under html[data-theme=\"dark\"]"
 };
 export const marks = {
   "row": {

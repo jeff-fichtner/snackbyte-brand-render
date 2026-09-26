@@ -63,6 +63,13 @@ for (const form of ['row', 'stack']) {
 const dts = read('index.d.ts');
 check(dts.includes("'day' | 'night'"), 'index.d.ts lost the theme union');
 
+// Every block the guide states ships, in the values and in the declarations. A block the
+// renderer forgets to export is a value the guide decided that no consumer can reach.
+for (const block of Object.keys(GUIDE).filter((k) => k !== '_' && k !== 'version')) {
+  check(read('index.js').includes(`export const ${block} =`), `index.js does not export ${block}`);
+  check(dts.includes(`export declare const ${block}:`), `index.d.ts does not declare ${block}`);
+}
+
 // Types are generated, not written: every key the guide states must appear in them, or a
 // consumer's typecheck rejects a value that is really there.
 for (const key of Object.keys(GUIDE.copy).filter((k) => k !== '_')) {

@@ -507,29 +507,32 @@ function baseCss() {
 }
 
 /** The whole guide, plus the marks as path data, for JavaScript and TypeScript consumers. */
+/** Every block the guide states, in its order. Each one ships; none is chosen here. */
+const BLOCKS = Object.keys(GUIDE).filter((k) => k !== '_' && k !== 'version');
+
+/**
+ * A TypeScript type for a JSON value, derived from the value itself. Declarations are
+ * generated rather than written, because a hand-written one silently omits whatever the
+ * guide adds next — which is how copy.based once reached the values but not the types.
+ */
+function typeOf(v) {
+  if (Array.isArray(v)) return v.length ? `${typeOf(v[0])}[]` : 'unknown[]';
+  if (v === null) return 'null';
+  if (typeof v === 'object')
+    return `{ ${Object.entries(v)
+      .map(([k, x]) => `${JSON.stringify(k)}: ${typeOf(x)}`)
+      .join('; ')} }`;
+  return typeof v;
+}
+
+/** The whole guide, plus the marks as path data, for JavaScript and TypeScript consumers. */
 function indexJs(forms) {
   return (
     `// Generated from the snackbyte brand guide v${GUIDE.version}. Do not edit.\n` +
     `export const version = ${JSON.stringify(GUIDE.version)};\n` +
-    `export const color = ${JSON.stringify(GUIDE.color, null, 2)};\n` +
-    `export const geometry = ${JSON.stringify(GUIDE.geometry, null, 2)};\n` +
-    `export const type = ${JSON.stringify(GUIDE.type, null, 2)};\n` +
-    `export const space = ${JSON.stringify(GUIDE.space, null, 2)};\n` +
-    `export const copy = ${JSON.stringify(GUIDE.copy, null, 2)};\n` +
+    BLOCKS.map((k) => `export const ${k} = ${JSON.stringify(GUIDE[k], null, 2)};\n`).join('') +
     `export const marks = ${JSON.stringify(forms, null, 2)};\n`
   );
-}
-
-/**
- * The `copy` block's shape, derived from the guide rather than restated. A hand-written
- * type here would silently omit any key the guide gained, which is the one failure this
- * repository is supposed to make impossible.
- */
-function copyFields() {
-  return Object.entries(GUIDE.copy)
-    .filter(([k]) => k !== '_')
-    .map(([k, v]) => `${JSON.stringify(k)}: ${Array.isArray(v) ? 'string[]' : 'string'}`)
-    .join('; ');
 }
 
 function indexDts() {
@@ -540,11 +543,7 @@ function indexDts() {
     `export type Shape = { d: string; role: 'ink' | 'sky' };\n` +
     `export type Mark = { viewBox: string; width: number; height: number; shapes: Shape[] };\n\n` +
     `export declare const version: string;\n` +
-    `export declare const color: Record<Role, { day: string; night: string; name: Record<Theme, string>; use: string }>;\n` +
-    `export declare const geometry: { cell: number; radius: number; gap: number; seam: number; bite: { r: number; cx: number; cy: number } };\n` +
-    `export declare const type: Record<string, unknown>;\n` +
-    `export declare const space: { unit: number; steps: Record<string, number> };\n` +
-    `export declare const copy: { ${copyFields()} };\n` +
+    BLOCKS.map((k) => `export declare const ${k}: ${typeOf(GUIDE[k])};\n`).join('') +
     `export declare const marks: { row: Mark; stack: Mark };\n`
   );
 }
