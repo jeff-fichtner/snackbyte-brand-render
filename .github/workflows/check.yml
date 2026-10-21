@@ -1,0 +1,47 @@
+name: check
+
+# The gate on every push (branches and tags) and every pull request. dist/ is committed and is
+# the package: consumers install a git tag and use dist/ as-is, so a tag whose dist/ is stale, or
+# that was built from a different guide than package.json pins, ships wrong values. This makes a
+# red tag visible before any consumer bumps to it.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: dist current, guide pinned, version tagged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # No npm cache, on purpose: the README's git-dependency trap is npm reusing a cached copy
+      # of the guide. A fresh runner installs the commit package-lock.json records, and
+      # check:all fails if that is not the guide version package.json pins.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - run: npm run check:all
+
+      - name: dist/ is exactly what the build produces
+        run: |
+          git diff --exit-code -- dist
+          test -z "$(git status --porcelain -- dist)"
+
+      # npm records package.json's version in every consumer's lockfile, so a tag must carry it.
+      - name: package.json version matches the tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::package.json version is $VERSION but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi

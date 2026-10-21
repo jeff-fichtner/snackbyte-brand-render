@@ -1,5 +1,5 @@
 /**
- * The check gate. Two things must hold:
+ * The check gate. Two things must hold, against the guide version package.json pins:
  *
  *   1. dist/ is what the guide currently produces. It is committed, so a consumer
  *      installing by git tag gets it without building; a stale dist/ would ship values
@@ -23,6 +23,16 @@ const fail = [];
 const check = (ok, what) => {
   if (!ok) fail.push(what);
 };
+
+// 0. the installed guide is the one package.json pins. npm can keep a cached copy of the git
+// dependency (see the README), and then dist/ would match a guide nobody asked for. The guide's
+// tokens.json carries the version its tag names.
+const pinned = require('../package.json').devDependencies['snackbyte-brand'].split('#')[1];
+check(
+  pinned === `v${GUIDE.version}`,
+  `the installed guide is v${GUIDE.version} but package.json pins ${pinned}: npm reused a stale ` +
+    'copy. Remove node_modules/snackbyte-brand and install the pinned tag explicitly (README).',
+);
 
 // 1. dist/ is current
 execFileSync('node', ['src/build.mjs'], { cwd: ROOT, stdio: 'ignore' });

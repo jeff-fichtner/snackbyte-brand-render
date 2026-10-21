@@ -38,22 +38,48 @@ serves both themes when filled from the tokens.
 
 ## Working on it
 
+`npm install` fetches the guide as a git dependency, pinned to a tag. `npm run build`
+regenerates `dist/`. `npm run check:all` asserts that the installed guide is the version
+`package.json` pins, that `dist/` is current, and that every value traces to the guide:
+
 ```bash
-npm install        # fetches the guide as a git dependency, pinned to a tag
-npm run build      # regenerates dist/
-npm run check:all  # asserts dist/ is current and every value traces to the guide
+npm install
+npm run build
+npm run check:all
 ```
+
+CI (`.github/workflows/check.yml`) runs the same on every push, tag and pull request, from a
+fresh install with no npm cache, and fails if the build changed anything in `dist/`.
+
+### Releasing
+
+A release is a tag on `main`, and `package.json`'s `version` is the tag without its `v`. npm
+records that version in every consumer's lockfile, so a mismatch misreports which release a
+consumer has. Set it in the commit you tag. CI fails a tag whose `package.json` says otherwise,
+so wait for the tag's check to go green before installing it in a consumer. Tags up to `v1.2.0`
+predate this rule and carry `1.0.0`.
 
 ### Taking a new version of the guide
 
+Set `GUIDE` to the guide tag you are taking (for example `v1.3.1`) and `VERSION` to this
+repository's next version, without the `v` (for example `1.3.0`). The block is one chain, so it
+stops at the first step that fails, and does nothing if either variable is unset:
+
 ```bash
-npm pkg set devDependencies.snackbyte-brand="github:jeff-fichtner/snackbyte-brand#v1.2.0"
-npm install && npm run build && npm run check:all
-git commit -am "take guide v1.2.0" && git tag v1.1.0 && git push origin main --tags
+: "${GUIDE:?set GUIDE first}" "${VERSION:?set VERSION first}" &&
+npm pkg set devDependencies.snackbyte-brand="github:jeff-fichtner/snackbyte-brand#$GUIDE" &&
+npm pkg set version="$VERSION" &&
+npm install &&
+npm run build &&
+npm run check:all &&
+git add package.json package-lock.json dist &&
+git commit -m "take guide $GUIDE" &&
+git tag "v$VERSION" &&
+git push origin main "v$VERSION"
 ```
 
-If the guide's version does not change in the output, npm reused a cached copy of the
-git dependency — `rm -rf node_modules/snackbyte-brand` and install the tag explicitly.
+If `check:all` reports that the installed guide is not the pinned one, npm reused a cached copy
+of the git dependency: `rm -rf node_modules/snackbyte-brand` and install the tag explicitly.
 For the same reason, never move a published tag: cut a new one.
 
 Then install the new tag in each consumer. The full loop, from deciding a value to
