@@ -1,4 +1,4 @@
-/* Generated from the snackbyte brand guide v1.3.0. Do not edit. */
+/* Generated from the snackbyte brand guide v2.1.0. Do not edit. */
 
 html,
 body {
@@ -8,12 +8,75 @@ body {
 body {
   background: var(--ground);
   color: var(--ink);
-  font-family: var(--font);
-  font-optical-sizing: auto;
-  font-variation-settings: 'opsz' var(--font-text-opsz);
   font-size: var(--type-0);
-  line-height: 1.5;
+  font-optical-sizing: auto;
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
+}
+
+/* The text face, everywhere below h1. A legal document (data-face='legal') swaps it
+   where it is set, so its children inherit the serif rather than the page's face. */
+body,
+[data-face] {
+  font-family: var(--font-text);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+}
+
+/* Form controls take the system face unless told otherwise: that would be a third. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+h2,
+h3,
+th,
+b,
+strong,
+button {
+  font-weight: var(--weight-strong);
+}
+
+h2,
+h3 {
+  line-height: var(--leading-heading);
+}
+
+/* Bricolage takes h1 and nothing else: the title cut, or the headline on the home page. */
+h1 {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-variation-settings: 'opsz' 96, 'wdth' 100;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.headline {
+  font-family: var(--font-headline);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 96, 'wdth' 100;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
+}
+
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-code);
+}
+
+/* A block set apart from the page. Always edged; never nested. */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
 }
 
 a {
@@ -25,13 +88,21 @@ a:focus-visible {
   border-radius: 3px;
 }
 
-/* The wordmark: the name, always lowercase, in the display cut. */
+/* The wordmark: the name, always lowercase, in its own cut. */
 .wordmark {
-  font-family: var(--font);
+  font-family: var(--font-wordmark);
   font-weight: 800;
-  font-variation-settings: 'opsz' 96;
+  font-variation-settings: 'opsz' 96, 'wdth' 100;
   letter-spacing: -0.045em;
   line-height: 1;
+}
+
+/* Words drawn with the mark, such as the place line under a lockup. */
+.mark-text {
+  font-family: var(--font-mark-text);
+  font-weight: 400;
+  font-variation-settings: 'opsz' 14, 'wdth' 100;
+  letter-spacing: 0em;
 }
 
 /* The primary lockup: the row above the name, one seam apart, left edges aligned

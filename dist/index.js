@@ -1,7 +1,7 @@
-// Generated from the snackbyte brand guide v1.3.0. Do not edit.
-export const version = "1.3.0";
+// Generated from the snackbyte brand guide v2.1.0. Do not edit.
+export const version = "2.1.0";
 export const color = {
-  "_": "Eight roles. Each has a day value and a night value; nothing else changes between themes. Ground and ink swap; the accents lift enough to read. Every text role passes 4.5:1 on its ground in both themes.",
+  "_": "Nine roles. Each has a day value and a night value; nothing else changes between themes. Ground and ink swap; the accents lift enough to read. Every text role passes 4.5:1 on its ground and on the panel in both themes.",
   "ground": {
     "day": "#ECEDEA",
     "night": "#2A2724",
@@ -45,7 +45,7 @@ export const color = {
       "day": "Sage",
       "night": "Sage"
     },
-    "use": "Marks and surfaces only. 2.9:1 on Alkali — never text."
+    "use": "Marks and surfaces only. 2.5:1 on Alkali — never text."
   },
   "sage-text": {
     "day": "#5F6E5A",
@@ -73,6 +73,15 @@ export const color = {
       "night": "Rule"
     },
     "use": "Hairlines and borders."
+  },
+  "panel": {
+    "day": "#FAFBF8",
+    "night": "#36332F",
+    "name": {
+      "day": "Tuff",
+      "night": "Tuff"
+    },
+    "use": "One colour for a block set apart from the page, such as a card, a callout or an exhibit's frame. Raised, never sunk; always with a 1px rule edge; never nested; never a table's header row."
   }
 };
 export const geometry = {
@@ -113,31 +122,123 @@ export const forms = {
   }
 };
 export const type = {
-  "_": "One family at two optical sizes. The wordmark is always the lowercase name in the display cut.",
-  "family": "Bricolage Grotesque",
-  "fallback": [
-    "system-ui",
-    "sans-serif"
-  ],
-  "googleFonts": "Bricolage+Grotesque:opsz,wght@12..96,300..800",
-  "source": "https://fonts.google.com/specimen/Bricolage+Grotesque",
-  "licence": "OFL",
+  "_": "Two faces on any page: Bricolage Grotesque, and one text face. The mark is all Bricolage. On a page, Bricolage takes h1 and nothing else; the text face takes everything below it. Legal and financial paper swaps Inter for Source Serif 4 below its title.",
+  "source": {
+    "_": "Where every family's files come from: one repository, at one commit.",
+    "repo": "google/fonts",
+    "commit": "5e8a3ba899557829a76cfdac30fa512bda91d7ca"
+  },
+  "families": {
+    "_": "Each family and where its files come from. Every surface serves the files itself, from type.source; nothing is fetched from a third party. None declares a Reserved Font Name, so a subset keeps its name.",
+    "bricolage": {
+      "family": "Bricolage Grotesque",
+      "fallback": [
+        "system-ui",
+        "sans-serif"
+      ],
+      "licence": "OFL",
+      "files": {
+        "roman": "ofl/bricolagegrotesque/BricolageGrotesque[opsz,wdth,wght].ttf"
+      }
+    },
+    "inter": {
+      "family": "Inter",
+      "fallback": [
+        "system-ui",
+        "sans-serif"
+      ],
+      "licence": "OFL",
+      "files": {
+        "roman": "ofl/inter/Inter[opsz,wght].ttf",
+        "italic": "ofl/inter/Inter-Italic[opsz,wght].ttf"
+      }
+    },
+    "sourceSerif": {
+      "family": "Source Serif 4",
+      "fallback": [
+        "Georgia",
+        "serif"
+      ],
+      "licence": "OFL",
+      "files": {
+        "roman": "ofl/sourceserif4/SourceSerif4[opsz,wght].ttf",
+        "italic": "ofl/sourceserif4/SourceSerif4-Italic[opsz,wght].ttf"
+      }
+    }
+  },
   "wordmark": {
+    "family": "bricolage",
     "text": "snackbyte",
     "weight": 800,
     "opsz": 96,
     "width": 100,
-    "tracking": -0.045
+    "tracking": -0.045,
+    "lineHeight": 1
   },
-  "display": {
-    "weight": 800,
-    "opsz": 96,
-    "tracking": -0.03
-  },
-  "text": {
+  "markText": {
+    "_": "Words drawn with the mark, such as the place line under a lockup.",
+    "family": "bricolage",
     "weight": 400,
     "opsz": 14,
+    "width": 100,
     "tracking": 0
+  },
+  "headline": {
+    "_": "The home page's headline: the brand's one loud line.",
+    "family": "bricolage",
+    "weight": 800,
+    "opsz": 96,
+    "width": 100,
+    "tracking": -0.03,
+    "lineHeight": 1.06
+  },
+  "title": {
+    "_": "h1 on every other page. Nothing on a page is set in Bricolage smaller than this.",
+    "family": "bricolage",
+    "weight": 700,
+    "opsz": 96,
+    "width": 100,
+    "tracking": -0.02,
+    "lineHeight": 1.05
+  },
+  "text": {
+    "_": "Everything on a page below h1. strong is for h2, h3, labels, table headers, buttons and bold lead-ins. No opsz: optical size follows the set size.",
+    "family": "inter",
+    "weights": {
+      "regular": 400,
+      "strong": 600
+    },
+    "tracking": 0,
+    "lineHeight": {
+      "body": 1.5,
+      "heading": 1.2
+    }
+  },
+  "legal": {
+    "_": "Replaces text below the title of a legal or financial document: privacy policy, terms, contracts, invoices, receipts. The test is the kind of document. A document never mixes it with text. No opsz: optical size follows the set size.",
+    "family": "sourceSerif",
+    "weights": {
+      "regular": 400,
+      "strong": 600
+    },
+    "tracking": 0,
+    "lineHeight": {
+      "body": 1.5,
+      "heading": 1.2
+    }
+  },
+  "code": {
+    "_": "Code sets in the system's monospace: the one third face a page may carry, because code is not text.",
+    "fallback": [
+      "ui-monospace",
+      "monospace"
+    ]
+  },
+  "rules": {
+    "_": "How every surface sets the faces.",
+    "fontSynthesis": "none",
+    "columnFigures": "tabular-nums",
+    "italic": "The text face's own, for emphasis and the titles of works. Bricolage takes none."
   },
   "scale": {
     "_": "Ratio 10/7 — cell to seam — from a 16px base.",
@@ -150,7 +251,12 @@ export const type = {
       47,
       67,
       95
-    ]
+    ],
+    "small": {
+      "_": "One step below the scale, for dense data: table cells, captions, small labels. Two seams.",
+      "px": 14,
+      "lineHeight": 1.45
+    }
   }
 };
 export const space = {

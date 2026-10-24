@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import * as fontkit from 'fontkit';
 
 const require = createRequire(import.meta.url);
 const GUIDE = require('snackbyte-brand/tokens.json');
@@ -49,6 +50,94 @@ for (const [name, px] of Object.entries(GUIDE.space.steps)) {
   check(css.includes(`--${name}: ${px}px;`), `tokens.css missing space ${name}`);
 }
 check(css.includes(`v${GUIDE.version}`), 'tokens.css does not name the guide version it came from');
+check(
+  css.includes(`--type-small: ${GUIDE.type.scale.small.px / GUIDE.type.scale.base}rem;`) &&
+    css.includes(`--leading-small: ${GUIDE.type.scale.small.lineHeight};`),
+  'tokens.css missing the small step',
+);
+
+// Every line height comes from the guide: the text face's and the legal face's, each in its rule.
+const legal = css.slice(css.indexOf("[data-face='legal']"));
+for (const [cut, where] of [
+  ['text', css.slice(0, css.indexOf('@media'))],
+  ['legal', legal],
+]) {
+  for (const [k, v] of Object.entries(GUIDE.type[cut].lineHeight))
+    check(where.includes(`--leading-${k}: ${v};`), `tokens.css missing ${cut} line height ${k}`);
+  for (const [k, v] of Object.entries(GUIDE.type[cut].weights))
+    check(where.includes(`--weight-${k}: ${v};`), `tokens.css missing ${cut} weight ${k}`);
+}
+check(legal.includes('--font-text: var(--font-legal);'), 'a legal document does not swap the text face');
+
+// Each cut's font stack names the guide's family and its fallbacks.
+const families = GUIDE.type.families;
+for (const cut of Object.keys(GUIDE.type).filter((k) => GUIDE.type[k].family)) {
+  const f = families[GUIDE.type[cut].family];
+  check(
+    css.includes(`: '${f.family}', ${f.fallback.join(', ')};`),
+    `tokens.css does not set ${cut} in ${f.family}`,
+  );
+}
+
+const base = read('base.css');
+const stated = new Set(
+  Object.values(GUIDE.type).flatMap((c) =>
+    typeof c.lineHeight === 'number' ? [c.lineHeight] : Object.values(c.lineHeight ?? {}),
+  ),
+);
+for (const [, v] of base.matchAll(/line-height: ([\d.]+);/g))
+  check(stated.has(Number(v)), `base.css sets line height ${v}, which the guide does not state`);
+for (const cut of ['title', 'headline', 'wordmark']) {
+  const c = GUIDE.type[cut];
+  check(
+    base.includes(`font-weight: ${c.weight};`) &&
+      base.includes(`letter-spacing: ${c.tracking}em;`) &&
+      base.includes(`line-height: ${c.lineHeight};`),
+    `base.css does not set the ${cut} cut`,
+  );
+}
+check(base.includes(`font-synthesis: ${GUIDE.type.rules.fontSynthesis};`), 'base.css lets the browser fake faces');
+check(base.includes(`font-variant-numeric: ${GUIDE.type.rules.columnFigures};`), 'base.css columns are not tabular');
+
+// The fonts: every file the guide names ships, from the commit it pins, subset to Latin, with
+// its licence, declared in fonts.css, and nothing in dist/'s CSS reaches a third party.
+const fonts = read('fonts.css');
+check(fonts.includes(GUIDE.type.source.commit), 'fonts.css does not name the commit its files came from');
+// The subset is exactly what fonts.css tells the browser each file covers.
+const declared = fonts
+  .match(/unicode-range: ([^;]+);/)[1]
+  .split(', ')
+  .map((u) => u.slice(2).split('-').map((h) => parseInt(h, 16)));
+const inLatin = (cp) => declared.some(([a, b = a]) => cp >= a && cp <= b);
+for (const [key, f] of Object.entries(families).filter(([k]) => k !== '_')) {
+  readFileSync(resolve(ROOT, 'dist/fonts', `${key}-${f.licence}.txt`));
+  for (const style of Object.keys(f.files)) {
+    const file = `fonts/${key}-${style}.woff2`;
+    const bytes = readFileSync(resolve(ROOT, 'dist', file));
+    check(bytes.subarray(0, 4).toString('latin1') === 'wOF2', `${file} is not woff2`);
+    const font = fontkit.create(bytes);
+    const family = font.name.records.preferredFamily?.en ?? font.familyName;
+    check(family === f.family, `${file} is ${family}, guide says ${f.family}`);
+    check('wght' in font.variationAxes, `${file} lost its weight axis`);
+    // U+FFFF is the end marker cmap format 4 requires, not a character.
+    check(
+      font.characterSet.every((cp) => cp === 0xffff || inLatin(cp)),
+      `${file} carries more than its unicode-range`,
+    );
+    check(
+      [...'AZaz09€'].every((c) => font.characterSet.includes(c.codePointAt(0))),
+      `${file} lost part of Latin`,
+    );
+    check(font.hasGlyphForCodePoint(0x30) && font.availableFeatures.includes('tnum'), `${file} lost tabular figures`);
+    check(
+      fonts.includes(`font-family: '${f.family}';\n  font-style: ${style === 'roman' ? 'normal' : style};`) &&
+        fonts.includes(`url('./${file}')`),
+      `fonts.css does not declare ${file}`,
+    );
+  }
+}
+for (const sheet of ['tokens.css', 'base.css', 'fonts.css'])
+  check(!/https?:\/\//.test(read(sheet)), `${sheet} loads something from a third party`);
 
 const marks = JSON.parse(read('marks.json'));
 for (const [form, spec] of [

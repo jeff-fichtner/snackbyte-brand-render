@@ -11,8 +11,9 @@ judgment belongs in the guide.
 
 | Output                                   | For                                                          |
 | ---------------------------------------- | ------------------------------------------------------------ |
-| `tokens.css`                             | The palette and both scales as custom properties, day and night. |
-| `base.css`                               | The page ground, the wordmark's cut, the lockup's proportions.  |
+| `tokens.css`                             | The palette, both scales and each cut's font stack as custom properties, day and night; the legal switch. |
+| `base.css`                               | The page ground, the text face and its two weights, h1 in Bricolage, the panel's edge, the wordmark's cut, the lockup's proportions. |
+| `fonts.css`, `fonts/`                    | Bricolage Grotesque, Inter and Source Serif 4, from the commit the guide pins, subset to Latin, as woff2 with their OFL licences. |
 | `index.js`, `index.d.ts`, `marks.json`   | The same values, plus the marks as path data, for JS and TS.    |
 | `mark-row-*.svg`, `icon-stack-*.svg`, `tile-*.svg`, `tile.svg` | The marks. `tile.svg` follows the OS theme.  |
 | `lockup-above-*.svg`, `lockup-beside-*.svg`, `wordmark-*.svg`  | The lockups, wordmark outlined.              |
@@ -24,10 +25,11 @@ judgment belongs in the guide.
 ## Using it
 
 ```bash
-npm i github:jeff-fichtner/snackbyte-brand-render#v1.0.0
+npm i github:jeff-fichtner/snackbyte-brand-render#v2.0.0
 ```
 
 ```js
+import '@snackbyte/brand/fonts.css';
 import '@snackbyte/brand/tokens.css';
 import '@snackbyte/brand/base.css';
 import { marks, copy, color } from '@snackbyte/brand';
@@ -36,10 +38,31 @@ import { marks, copy, color } from '@snackbyte/brand';
 The marks carry a role per shape — `ink` or `sky` — rather than a colour, so one SVG
 serves both themes when filled from the tokens.
 
+**The faces are served by the page, never fetched from a third party.** `fonts.css` loads
+`./fonts/*.woff2` relative to itself: a bundler that resolves CSS `url()`s (Vite does) copies
+them; anything else serves `dist/fonts/` beside wherever it serves `fonts.css`.
+
+**Type.** `base.css` sets everything in the text face (`--font-text`, Inter) at
+`--weight-regular`, with h2, h3, table headers, `b`, `strong` and buttons at
+`--weight-strong`, and h1 in Bricolage's title cut. Give the home page's h1 the class
+`headline`. Words drawn with the mark take `.mark-text`. Dense data takes `--type-small`
+at `--leading-small`.
+
+**A legal or financial document** sets `data-face="legal"` on `<html>`, or on the element
+that holds it: Source Serif 4 then replaces the text face below the title, h2 included.
+
+**A block set apart from the page** takes the class `panel`: the panel colour with its 1px
+rule edge.
+
+From 1.x: `--font`, `--font-display-opsz` and `--font-text-opsz` are gone, as the guide's
+`type.family`, `type.display` and `type.text.opsz` are. Bricolage below h1 becomes
+`--font-text`; a headline's display cut becomes h1 or `.headline`; the wordmark keeps `.wordmark`.
+
 ## Working on it
 
 `npm install` fetches the guide as a git dependency, pinned to a tag. `npm run build`
-regenerates `dist/`. `npm run check:all` asserts that the installed guide is the version
+regenerates `dist/`, fetching each font file once from the repository and commit the guide's
+`type.source` names into `.cache/fonts/<commit>/`. `npm run check:all` asserts that the installed guide is the version
 `package.json` pins, that `dist/` is current, and that every value traces to the guide:
 
 ```bash
