@@ -1,4 +1,4 @@
-/* Generated from the snackbyte brand guide v1.3.0. Do not edit. */
+/* Generated from the snackbyte brand guide v2.1.0. Do not edit. */
 
 :root {
   --ground: #ECEDEA;
@@ -9,6 +9,7 @@
   --sage-text: #5F6E5A;
   --bitterbrush: #D2A93A;
   --rule: #cfd1cb;
+  --panel: #FAFBF8;
 
   --unit: 4px;
   --gap: 12px;
@@ -23,10 +24,21 @@
   --type-3: 2.938rem;
   --type-4: 4.188rem;
   --type-5: 5.938rem;
+  --type-small: 0.875rem;
+  --leading-small: 1.45;
 
-  --font: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-display-opsz: 96;
-  --font-text-opsz: 14;
+  --font-wordmark: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-mark-text: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-headline: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-title: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-text: 'Inter', system-ui, sans-serif;
+  --font-legal: 'Source Serif 4', Georgia, serif;
+  --font-code: ui-monospace, monospace;
+
+  --weight-regular: 400;
+  --weight-strong: 600;
+  --leading-body: 1.5;
+  --leading-heading: 1.2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +51,7 @@
     --sage-text: #9DAE98;
     --bitterbrush: #DDB447;
     --rule: #4a4642;
+    --panel: #36332F;
   }
 }
 
@@ -51,4 +64,15 @@
   --sage-text: #9DAE98;
   --bitterbrush: #DDB447;
   --rule: #4a4642;
+  --panel: #36332F;
+}
+
+/* A legal or financial document: below its title, Source Serif 4 replaces the text face.
+   Set data-face='legal' on <html>, or on the element that holds the document. */
+[data-face='legal'] {
+  --font-text: var(--font-legal);
+  --weight-regular: 400;
+  --weight-strong: 600;
+  --leading-body: 1.5;
+  --leading-heading: 1.2;
 }

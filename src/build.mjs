@@ -9,15 +9,17 @@
  *
  *   npm run build
  *
- * The font is fetched once into .cache/fonts/ (gitignored). dist/ is committed, so a
- * consumer installing this by git tag needs no build step of its own.
+ * Every family's files are fetched once, at the commit the guide pins, into .cache/fonts/
+ * (gitignored), then subset to Latin and shipped as woff2 beside their licences. dist/ is
+ * committed, so a consumer installing this by git tag needs no build step of its own.
  */
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { resolve, join, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import * as fontkit from 'fontkit';
 import { Resvg } from '@resvg/resvg-js';
+import subsetFont from 'subset-font';
 
 const require = createRequire(import.meta.url);
 /** The guide: the single source of every value below. */
@@ -25,9 +27,40 @@ const GUIDE = require('snackbyte-brand/tokens.json');
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const OUT = resolve(ROOT, 'dist');
-const FONT_URL =
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/bricolagegrotesque/BricolageGrotesque%5Bopsz%2Cwdth%2Cwght%5D.ttf';
-const FONT_PATH = resolve(ROOT, '.cache/fonts/BricolageGrotesque[opsz,wdth,wght].ttf');
+
+// ---- the fonts, from the one commit the guide pins ------------------------------
+const SOURCE = GUIDE.type.source;
+/** Every family the guide names, keyed as it keys them: { bricolage: { family, files, … }, … }. */
+const FAMILIES = Object.fromEntries(
+  Object.entries(GUIDE.type.families).filter(([k]) => k !== '_'),
+);
+const sourceUrl = (path) =>
+  `https://raw.githubusercontent.com/${SOURCE.repo}/${SOURCE.commit}/` +
+  path.split('/').map(encodeURIComponent).join('/');
+const cachePath = (path) => resolve(ROOT, '.cache/fonts', SOURCE.commit, path);
+/** The licence that sits beside a family's files in the source, named as the guide names it. */
+const licencePath = (key) =>
+  posix.join(posix.dirname(Object.values(FAMILIES[key].files)[0]), `${FAMILIES[key].licence}.txt`);
+/** A family's file in the source checkout, by guide key and style (roman, italic). */
+const fontPath = (key, style = 'roman') => cachePath(FAMILIES[key].files[style]);
+/** What dist/ calls a shipped file: the guide's family key and style. */
+const shippedFont = (key, style) => `fonts/${key}-${style}.woff2`;
+const shippedLicence = (key) => `fonts/${key}-${FAMILIES[key].licence}.txt`;
+
+/**
+ * Google Fonts' `latin` subset, the definition every browser already meets in its
+ * unicode-range. "Latin" in the guide means this set; it is not chosen here.
+ */
+const LATIN = [
+  [0x0000, 0x00ff], [0x0131], [0x0152, 0x0153], [0x02bb, 0x02bc], [0x02c6], [0x02da],
+  [0x02dc], [0x0304], [0x0308], [0x0329], [0x2000, 0x206f], [0x20ac], [0x2122], [0x2191],
+  [0x2193], [0x2212], [0x2215], [0xfeff], [0xfffd],
+];
+const hex = (n) => n.toString(16).toUpperCase().padStart(4, '0');
+const LATIN_RANGE = LATIN.map(([a, b]) => (b ? `U+${hex(a)}-${hex(b)}` : `U+${hex(a)}`)).join(', ');
+const LATIN_TEXT = LATIN.flatMap(([a, b = a]) =>
+  Array.from({ length: b - a + 1 }, (_, i) => String.fromCodePoint(a + i)),
+).join('');
 
 // ---- the geometry, in one unit ------------------------------------------------
 const CELL = GUIDE.geometry.cell;
@@ -50,14 +83,8 @@ const THEMES = Object.fromEntries(
 
 // ---- the wordmark -------------------------------------------------------------
 const WORD = GUIDE.type.wordmark.text;
-const VARIATION = {
-  wght: GUIDE.type.wordmark.weight,
-  opsz: GUIDE.type.wordmark.opsz,
-  wdth: GUIDE.type.wordmark.width,
-};
-const TRACKING_EM = GUIDE.type.wordmark.tracking;
 
-const r = (n) => Math.round(n * 1000) / 1000;
+const r =(n) => Math.round(n * 1000) / 1000;
 
 /** A plain cell as a path (a rounded rect), at (x, y). */
 function cellPath(x, y) {
@@ -159,23 +186,35 @@ function tileThemedSvg() {
 }
 
 // ---- the wordmark, outlined ---------------------------------------------------
-async function ensureFont() {
-  if (existsSync(FONT_PATH)) return;
-  mkdirSync(resolve(FONT_PATH, '..'), { recursive: true });
-  const res = await fetch(FONT_URL);
-  if (!res.ok) throw new Error(`font fetch failed: ${res.status} ${FONT_URL}`);
-  writeFileSync(FONT_PATH, Buffer.from(await res.arrayBuffer()));
+/** Fetches one file from the source at the pinned commit, once. */
+async function ensureSource(path) {
+  const dest = cachePath(path);
+  if (existsSync(dest)) return;
+  mkdirSync(resolve(dest, '..'), { recursive: true });
+  const res = await fetch(sourceUrl(path));
+  if (!res.ok) throw new Error(`font fetch failed: ${res.status} ${sourceUrl(path)}`);
+  writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+}
+
+async function ensureFonts() {
+  for (const key of Object.keys(FAMILIES)) {
+    for (const path of Object.values(FAMILIES[key].files)) await ensureSource(path);
+    await ensureSource(licencePath(key));
+  }
 }
 
 /**
- * Lays out `text` at `size` px in the given variation and returns its glyph paths (y down,
- * origin at the baseline's left advance origin) plus the ink bounds and the font's vertical
- * metrics. The wordmark is one call of this; the social card's headline is another.
+ * Lays out `text` at `size` px in one of the guide's drawn cuts (wordmark, headline,
+ * markText) and returns its glyph paths (y down, origin at the baseline's left advance
+ * origin) plus the ink bounds and the font's vertical metrics. The wordmark is one call of
+ * this; the social card's headline is another.
  */
-function outline(text, size, variation = VARIATION, trackingEm = TRACKING_EM) {
-  const font = fontkit.openSync(FONT_PATH).getVariation(variation);
+function outline(text, size, cut = GUIDE.type.wordmark) {
+  const font = fontkit
+    .openSync(fontPath(cut.family))
+    .getVariation({ wght: cut.weight, opsz: cut.opsz, wdth: cut.width });
   const scale = size / font.unitsPerEm;
-  const tracking = trackingEm * size;
+  const tracking = cut.tracking * size;
   const run = font.layout(text);
   let x = 0;
   const paths = [];
@@ -286,13 +325,10 @@ function socialSvg(t) {
   const gap = SEAM * unit;
   const wordTop = pad + rowH + gap;
   const wordBottom = wordTop + (w.ink.maxY - w.ink.minY);
-  const display = { wght: GUIDE.type.display.weight, opsz: GUIDE.type.display.opsz, wdth: 100 };
-  const lines = GUIDE.copy.headlineLines.map((s) =>
-    outline(s, 64, display, GUIDE.type.display.tracking),
-  );
-  const lineH = 64 * 1.06;
+  const lines = GUIDE.copy.headlineLines.map((s) => outline(s, 64, GUIDE.type.headline));
+  const lineH = 64 * GUIDE.type.headline.lineHeight;
   const headTop = wordBottom + 60;
-  const place = outline(GUIDE.copy.place, 26, { wght: GUIDE.type.text.weight, opsz: GUIDE.type.text.opsz, wdth: 100 }, 0);
+  const place = outline(GUIDE.copy.place, 26, GUIDE.type.markText);
   const placeBaseline = H - pad + 6;
   const text = (o, y, fill) =>
     `  <path transform="translate(${r(pad - o.ink.minX)} ${r(y)})" d="${o.d}" fill="${fill}"/>`;
@@ -325,11 +361,8 @@ function squareSvg(t) {
   const rowH = row.h * unit;
   const gap = SEAM * unit;
   const wordH = w.ink.maxY - w.ink.minY;
-  const display = { wght: GUIDE.type.display.weight, opsz: GUIDE.type.display.opsz, wdth: 100 };
-  const lines = GUIDE.copy.headlineLines.map((s) =>
-    outline(s, 52, display, GUIDE.type.display.tracking),
-  );
-  const lineH = 52 * 1.06;
+  const lines = GUIDE.copy.headlineLines.map((s) => outline(s, 52, GUIDE.type.headline));
+  const lineH = 52 * GUIDE.type.headline.lineHeight;
   const headGap = 52;
   const total = rowH + gap + wordH + headGap + lineH * lines.length;
   const top = (S - total) / 2;
@@ -378,7 +411,7 @@ function ico(pngs) {
 }
 
 // ---- write everything ---------------------------------------------------------
-await ensureFont();
+await ensureFonts();
 mkdirSync(OUT, { recursive: true });
 const write = (rel, data) => {
   const p = join(OUT, rel);
@@ -432,6 +465,25 @@ write('tile.svg', tileThemedSvg());
 
 // ---- the guide, compressed for code -------------------------------------------
 
+/** Every cut the guide names a face for, in its order: wordmark, markText, … code. */
+const CUTS = Object.keys(GUIDE.type).filter((k) => GUIDE.type[k].family || GUIDE.type[k].fallback);
+const kebab = (s) => s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+/** A cut's font stack: its family and that family's fallbacks, or the fallbacks alone (code). */
+const stackOf = (cut) => {
+  const c = GUIDE.type[cut];
+  if (!c.family) return c.fallback.join(', ');
+  return [`'${FAMILIES[c.family].family}'`, ...FAMILIES[c.family].fallback].join(', ');
+};
+
+/**
+ * The text face's weights and line heights. The legal face states its own, so a legal
+ * document swaps all of them with the family rather than assuming they agree.
+ */
+const faceVars = (cut) => [
+  ...Object.entries(GUIDE.type[cut].weights).map(([k, v]) => `  --weight-${k}: ${v};`),
+  ...Object.entries(GUIDE.type[cut].lineHeight).map(([k, v]) => `  --leading-${k}: ${v};`),
+];
+
 /** `--role: value;` lines for one theme, plus the scales (which do not change by theme). */
 const varsFor = (theme, { scales = false } = {}) => {
   const lines = ROLES.map((role) => `  --${role}: ${GUIDE.color[role][theme]};`);
@@ -443,12 +495,12 @@ const varsFor = (theme, { scales = false } = {}) => {
     GUIDE.type.scale.steps.forEach((px, i) =>
       lines.push(`  --type-${i}: ${r(px / GUIDE.type.scale.base)}rem;`),
     );
+    lines.push(`  --type-small: ${r(GUIDE.type.scale.small.px / GUIDE.type.scale.base)}rem;`);
+    lines.push(`  --leading-small: ${GUIDE.type.scale.small.lineHeight};`);
     lines.push('');
-    lines.push(
-      `  --font: '${GUIDE.type.family}', ${GUIDE.type.fallback.join(', ')};`,
-      `  --font-display-opsz: ${GUIDE.type.display.opsz};`,
-      `  --font-text-opsz: ${GUIDE.type.text.opsz};`,
-    );
+    for (const cut of CUTS) lines.push(`  --font-${kebab(cut)}: ${stackOf(cut)};`);
+    lines.push('');
+    lines.push(...faceVars('text'));
   }
   return lines.join('\n');
 };
@@ -465,13 +517,72 @@ function tokensCss() {
       .map((l) => `  ${l}`)
       .join('\n') +
     `\n  }\n}\n\n` +
-    `:root[data-theme='dark'] {\n${varsFor('night')}\n}\n`
+    `:root[data-theme='dark'] {\n${varsFor('night')}\n}\n\n` +
+    `/* A legal or financial document: below its title, ${FAMILIES[GUIDE.type.legal.family].family} replaces the text face.\n` +
+    `   Set data-face='legal' on <html>, or on the element that holds the document. */\n` +
+    `[data-face='legal'] {\n  --font-text: var(--font-legal);\n${faceVars('legal').join('\n')}\n}\n`
+  );
+}
+
+/** The CSS for one of the guide's Bricolage cuts: weight, optical size, width, tracking. */
+const cutCss = (cut) => {
+  const c = GUIDE.type[cut];
+  return (
+    `  font-family: var(--font-${kebab(cut)});\n  font-weight: ${c.weight};\n` +
+    `  font-variation-settings: 'opsz' ${c.opsz}, 'wdth' ${c.width};\n` +
+    `  letter-spacing: ${c.tracking}em;\n` +
+    (c.lineHeight === undefined ? '' : `  line-height: ${c.lineHeight};\n`)
+  );
+};
+
+/**
+ * One @font-face per file the guide names, served from beside this stylesheet. The weight
+ * and width ranges are read from each file's own axes.
+ */
+function fontFace(key, style, axes) {
+  const range = (axis, unit = '') => `${axes[axis].min}${unit} ${axes[axis].max}${unit}`;
+  return (
+    `@font-face {\n  font-family: '${FAMILIES[key].family}';\n` +
+    `  font-style: ${style === 'roman' ? 'normal' : style};\n` +
+    `  font-weight: ${range('wght')};\n` +
+    (axes.wdth ? `  font-stretch: ${range('wdth', '%')};\n` : '') +
+    // swap: text shows in the fallback while the face loads, rather than not at all
+    `  font-display: swap;\n` +
+    `  src: url('./${shippedFont(key, style)}') format('woff2');\n` +
+    `  unicode-range: ${LATIN_RANGE};\n}\n`
+  );
+}
+
+/** Each family's files, subset to Latin, as woff2, with its licence; and fonts.css to load them. */
+async function writeFonts() {
+  const faces = [];
+  for (const key of Object.keys(FAMILIES)) {
+    for (const [style, path] of Object.entries(FAMILIES[key].files)) {
+      const source = readFileSync(cachePath(path));
+      // Name IDs 0–6 are harfbuzz's default; 13 and 14 are the licence and its URL; 16 and 17
+      // the typographic family, which a variable font's ID 1 (its default instance) is not.
+      const woff2 = await subsetFont(source, LATIN_TEXT, {
+        targetFormat: 'woff2',
+        preserveNameIds: [0, 1, 2, 3, 4, 5, 6, 13, 14, 16, 17],
+      });
+      write(shippedFont(key, style), woff2);
+      faces.push(fontFace(key, style, fontkit.create(source).variationAxes));
+    }
+    write(shippedLicence(key), readFileSync(cachePath(licencePath(key))));
+  }
+  write(
+    'fonts.css',
+    `/* Generated from the snackbyte brand guide v${GUIDE.version}. Do not edit.\n` +
+      `   The faces, from ${SOURCE.repo} at ${SOURCE.commit}, subset to Latin.\n` +
+      `   Serve fonts/ beside this file; nothing loads from a third party. */\n\n` +
+      faces.join('\n'),
   );
 }
 
 /**
- * The rules that are the guide rather than a page's taste: the page ground and ink,
- * the wordmark's cut, and the lockup's proportions. A consumer may skip this file.
+ * The rules that are the guide rather than a page's taste: the page ground and ink, the
+ * text face and its two weights, h1 in Bricolage, the panel's edge, the wordmark's cut,
+ * and the lockup's proportions. A consumer may skip this file.
  */
 function baseCss() {
   const size = 100;
@@ -479,23 +590,38 @@ function baseCss() {
   const bearing = w.ink.minX / size; // the name's left side bearing, in ems
   const rowEm = 0.75 * (w.ink.width / size); // the row is three quarters of the name's ink width
   const seamEm = (rowEm / rowShapes(THEMES.day).w) * SEAM; // one seam, at the row's rendered scale
-  // With line-height 1 the wordmark's box is shorter than the font's content box, so its
+  // At the wordmark's line height its box is shorter than the font's content box, so its
   // top sits a little above the ink. That inset is already vertical space; the seam is
   // measured from the ink, so the gap set in CSS is the seam less the inset.
-  const halfLeading = (1 * size - (w.ascent - w.descent)) / 2;
+  const halfLeading = (GUIDE.type.wordmark.lineHeight * size - (w.ascent - w.descent)) / 2;
   const inset = (w.ascent + halfLeading - -w.ink.minY) / size;
   return (
     `/* Generated from the snackbyte brand guide v${GUIDE.version}. Do not edit. */\n\n` +
     `html,\nbody {\n  margin: 0;\n}\n\n` +
-    `body {\n  background: var(--ground);\n  color: var(--ink);\n  font-family: var(--font);\n` +
-    `  font-optical-sizing: auto;\n  font-variation-settings: 'opsz' var(--font-text-opsz);\n` +
-    `  font-size: var(--type-0);\n  line-height: 1.5;\n  -webkit-font-smoothing: antialiased;\n}\n\n` +
+    `body {\n  background: var(--ground);\n  color: var(--ink);\n  font-size: var(--type-0);\n` +
+    `  font-optical-sizing: auto;\n  font-synthesis: ${GUIDE.type.rules.fontSynthesis};\n` +
+    `  -webkit-font-smoothing: antialiased;\n}\n\n` +
+    `/* The text face, everywhere below h1. A legal document (data-face='legal') swaps it\n` +
+    `   where it is set, so its children inherit the serif rather than the page's face. */\n` +
+    `body,\n[data-face] {\n  font-family: var(--font-text);\n  font-weight: var(--weight-regular);\n` +
+    `  line-height: var(--leading-body);\n}\n\n` +
+    `/* Form controls take the system face unless told otherwise: that would be a third. */\n` +
+    `button,\ninput,\nselect,\ntextarea {\n  font-family: inherit;\n}\n\n` +
+    `h2,\nh3,\nth,\nb,\nstrong,\nbutton {\n  font-weight: var(--weight-strong);\n}\n\n` +
+    `h2,\nh3 {\n  line-height: var(--leading-heading);\n}\n\n` +
+    `/* Bricolage takes h1 and nothing else: the title cut, or the headline on the home page. */\n` +
+    `h1 {\n${cutCss('title')}}\n\n` +
+    `.headline {\n${cutCss('headline')}}\n\n` +
+    `table {\n  font-variant-numeric: ${GUIDE.type.rules.columnFigures};\n}\n\n` +
+    `code,\nkbd,\nsamp,\npre {\n  font-family: var(--font-code);\n}\n\n` +
+    `/* A block set apart from the page. Always edged; never nested. */\n` +
+    `.panel {\n  background: var(--panel);\n  border: 1px solid var(--rule);\n}\n\n` +
     `a {\n  color: var(--sky);\n}\na:focus-visible {\n  outline: 2px solid var(--sky);\n` +
     `  outline-offset: 3px;\n  border-radius: 3px;\n}\n\n` +
-    `/* The wordmark: the name, always lowercase, in the display cut. */\n` +
-    `.wordmark {\n  font-family: var(--font);\n  font-weight: ${GUIDE.type.wordmark.weight};\n` +
-    `  font-variation-settings: 'opsz' ${GUIDE.type.wordmark.opsz};\n` +
-    `  letter-spacing: ${GUIDE.type.wordmark.tracking}em;\n  line-height: 1;\n}\n\n` +
+    `/* The wordmark: the name, always lowercase, in its own cut. */\n` +
+    `.wordmark {\n${cutCss('wordmark')}}\n\n` +
+    `/* Words drawn with the mark, such as the place line under a lockup. */\n` +
+    `.mark-text {\n${cutCss('markText')}}\n\n` +
     `/* The primary lockup: the row above the name, one seam apart, left edges aligned\n` +
     `   on ink. The proportions come from the font's metrics. */\n` +
     `.lockup {\n  display: inline-flex;\n  flex-direction: column;\n  align-items: flex-start;\n` +
@@ -557,6 +683,7 @@ const asMark = ({ shapes, w, h }) => ({
 });
 const FORMS = { row: asMark(rowShapes(ROLE_SENTINEL)), stack: asMark(stackShapes(ROLE_SENTINEL)) };
 
+await writeFonts();
 write('tokens.css', tokensCss());
 write('base.css', baseCss());
 write('index.js', indexJs(FORMS));

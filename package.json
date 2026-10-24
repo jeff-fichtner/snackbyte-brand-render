@@ -1,7 +1,7 @@
 {
   "name": "@snackbyte/brand",
-  "version": "1.0.0",
-  "description": "The snackbyte brand, compressed for code: tokens as CSS and TypeScript, the marks as SVG, a favicon set. Generated from the guide.",
+  "version": "2.0.0",
+  "description": "The snackbyte brand, compressed for code: tokens as CSS and TypeScript, the faces as self-hosted woff2, the marks as SVG, a favicon set. Generated from the guide.",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,9 @@
     "./tokens.css": "./dist/tokens.css",
     "./base.css": "./dist/base.css",
     "./marks.json": "./dist/marks.json",
-    "./dist/*": "./dist/*"
+    "./dist/*": "./dist/*",
+    "./fonts.css": "./dist/fonts.css",
+    "./fonts/*": "./dist/fonts/*"
   },
   "files": [
     "dist"
@@ -29,7 +31,8 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "fontkit": "^2.0.4",
-    "snackbyte-brand": "github:jeff-fichtner/snackbyte-brand#v1.3.0"
+    "snackbyte-brand": "github:jeff-fichtner/snackbyte-brand#v2.1.0",
+    "subset-font": "^2.9.0"
   },
   "repository": {
     "type": "git",
